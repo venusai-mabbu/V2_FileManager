@@ -1,1 +1,3 @@
 17fc81e -- initial projec with UI and no navigation and destination upload
+
+2e4ae21 -- fixed editor screen and working on explorer(index.tsc)

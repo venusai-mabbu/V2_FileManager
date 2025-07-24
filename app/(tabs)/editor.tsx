@@ -19,18 +19,36 @@ import { useTheme } from '@/context/ThemeContext';
 import { useFileSystem } from '@/context/FileSystemContext';
 import { readFileContent, writeFileContent, createFile } from '@/utils/fileUtils';
 
+import { useRoute } from '@react-navigation/native';
+
+
+
 export default function TextEditor() {
+  
   const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { currentPath, refreshFiles } = useFileSystem();
 
+  const route = useRoute();
+  
   const [content, setContent] = useState('');
   const [fileName, setFileName] = useState('');
   const [currentFile, setCurrentFile] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaveModalVisible, setSaveModalVisible] = useState(false);
   const [tempFileName, setTempFileName] = useState('new-file.txt');
+ 
+  const { fileUri, fileName: filename, fileContent } = route.params || {};
 
-  const styles = createStyles(colors);
+  useEffect(() => {
+    if (fileUri && fileContent) {
+      setCurrentFile(fileUri);
+      setFileName(filename || 'untitled.txt');
+      setContent(fileContent);
+      setHasUnsavedChanges(false);
+    }
+  }, [fileUri, fileContent]);
+
 
   const openFile = async () => {
     try {

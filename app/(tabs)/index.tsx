@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,9 +11,16 @@ import {
   RefreshControl,
   SafeAreaView,
 } from 'react-native';
-import { ArrowLeft, Plus, Grid3x3 as Grid3X3, List, Upload, Menu, Import as SortAsc } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  Plus,
+  Grid3x3 as Grid3X3,
+  List,
+  Import as SortAsc,
+} from 'lucide-react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
+import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '@/context/ThemeContext';
 import { useFileSystem } from '@/context/FileSystemContext';
 import { useSettings } from '@/context/SettingsContext';
@@ -22,39 +29,37 @@ import SearchBar from '@/components/SearchBar';
 import CreateModal from '@/components/CreateModal';
 import { FileItem as FileItemType, SortBy, SortOrder } from '@/types/file';
 import { createDirectory, createFile, deleteItem } from '@/utils/fileUtils';
+import { readFileContent } from '@/utils/fileUtils';
 
 export default function FileExplorer() {
   const { colors } = useTheme();
-  const { 
-    currentPath, 
-    files, 
-    loading, 
-    refreshFiles, 
-    addToRecent 
+  const {
+    currentPath,
+    files,
+    loading,
+    refreshFiles,
+    addToRecent,
+    setCurrentPath,
   } = useFileSystem();
   const { settings, updateSettings } = useSettings();
-  
+  const navigation = useNavigation();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [createType, setCreateType] = useState<'file' | 'folder'>('file');
   const [sortBy, setSortBy] = useState<SortBy>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
-  const navigationHistory = useState<string[]>([currentPath])[0];
-
   const filteredAndSortedFiles = useMemo(() => {
     let filtered = files;
 
-    // Apply search filter
     if (searchQuery.trim()) {
       filtered = files.filter(file =>
         file.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Apply sorting
     return [...filtered].sort((a, b) => {
-      // Always put folders first
       if (a.isDirectory && !b.isDirectory) return -1;
       if (!a.isDirectory && b.isDirectory) return 1;
 
@@ -92,26 +97,36 @@ export default function FileExplorer() {
 
   const navigateToDirectory = (path: string) => {
     if (path !== currentPath) {
+      setCurrentPath(path);
       refreshFiles();
     }
   };
 
-  const handleFilePress = async (file: FileItemType) => {
-    if (file.isDirectory) {
-      navigateToDirectory(file.uri);
-    } else {
-      addToRecent(file.uri);
-      // Handle file opening based on type
-      if (file.extension === 'txt' || file.extension === 'md') {
-        // Navigate to text editor
-        Alert.alert('Info', `Text editing will open in the Editor tab`);
-      } else {
-        Alert.alert('File Info', `Selected: ${file.name}\nSize: ${file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown'}`);
-      }
-    }
-  };
+const handleFilePress = async (file: FileItemType) => {
+  if (file.isDirectory) {
+    navigateToDirectory(file.uri);
+  } else {
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    const textExtensions = ['txt', 'md', 'json', 'log'];
 
-  const handleFileLongPress = (file: FileItemType) => {
+    if (textExtensions.includes(extension)) {
+      try {
+        const content = await readFileContent(file.uri); // ✅ read the file content
+        navigation.navigate('editor', {
+          fileUri: file.uri,
+          fileName: file.name,
+          fileContent: content,
+        });
+      } catch (err) {
+        Alert.alert('Error', 'Failed to read file');
+      }
+    } else {
+      Alert.alert('File Info', `Selected: ${file.name}\nSize: ${file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown'}`);
+    }
+  }
+};
+
+const handleFileLongPress = (file: FileItemType) => {
     const options = ['Delete', 'Rename', 'Copy', 'Move', 'Cancel'];
     const destructiveButtonIndex = 0;
     const cancelButtonIndex = 4;
@@ -167,23 +182,8 @@ export default function FileExplorer() {
         );
         break;
       case 1: // Rename
-        Alert.prompt(
-          'Rename',
-          `Enter new name for "${file.name}"`,
-          async (newName) => {
-            if (newName && newName.trim()) {
-              try {
-                const newPath = `${currentPath}/${newName.trim()}`;
-                await FileSystem.moveAsync({ from: file.uri, to: newPath });
-                await refreshFiles();
-              } catch (error) {
-                Alert.alert('Error', 'Failed to rename item');
-              }
-            }
-          },
-          'plain-text',
-          file.name
-        );
+        // TODO: Replace with a custom rename modal like CreateModal
+        Alert.alert('Rename not supported on Android yet', 'Use modal to enter new name.');
         break;
     }
   };
@@ -229,12 +229,8 @@ export default function FileExplorer() {
         const asset = result.assets[0];
         const fileName = asset.name;
         const destinationPath = `${currentPath}/${fileName}`;
-        
-        await FileSystem.copyAsync({
-          from: asset.uri,
-          to: destinationPath,
-        });
-        
+
+        await FileSystem.copyAsync({ from: asset.uri, to: destinationPath });
         await refreshFiles();
         Alert.alert('Success', `${fileName} imported successfully`);
       }
@@ -253,10 +249,7 @@ export default function FileExplorer() {
 
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options,
-          cancelButtonIndex,
-        },
+        { options, cancelButtonIndex },
         (buttonIndex) => {
           switch (buttonIndex) {
             case 0:
@@ -274,16 +267,12 @@ export default function FileExplorer() {
         }
       );
     } else {
-      Alert.alert(
-        'Create',
-        'Choose an option',
-        [
-          { text: 'Create File', onPress: () => { setCreateType('file'); setCreateModalVisible(true); } },
-          { text: 'Create Folder', onPress: () => { setCreateType('folder'); setCreateModalVisible(true); } },
-          { text: 'Import File', onPress: handleImportFile },
-          { text: 'Cancel', style: 'cancel' },
-        ]
-      );
+      Alert.alert('Create', 'Choose an option', [
+        { text: 'Create File', onPress: () => { setCreateType('file'); setCreateModalVisible(true); } },
+        { text: 'Create Folder', onPress: () => { setCreateType('folder'); setCreateModalVisible(true); } },
+        { text: 'Import File', onPress: handleImportFile },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
     }
   };
 
@@ -322,6 +311,12 @@ export default function FileExplorer() {
         </View>
       </View>
 
+      <View style={styles.pathBar}>
+        <Text style={styles.pathText} numberOfLines={1} ellipsizeMode="middle">
+          {currentPath}
+        </Text>
+      </View>
+
       <SearchBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -342,9 +337,7 @@ export default function FileExplorer() {
         numColumns={settings.gridView ? 2 : 1}
         key={settings.gridView ? 'grid' : 'list'}
         contentContainerStyle={styles.listContainer}
-        refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={refreshFiles} tintColor={colors.primary} />
-        }
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={refreshFiles} tintColor={colors.primary} />}
         showsVerticalScrollIndicator={false}
       />
 
@@ -394,6 +387,18 @@ const createStyles = (colors: any) => StyleSheet.create({
   headerButton: {
     padding: 8,
     marginLeft: 8,
+  },
+  pathBar: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  pathText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontFamily: Platform.select({ ios: 'Courier', android: 'monospace' }),
   },
   listContainer: {
     padding: 16,
