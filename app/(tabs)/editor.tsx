@@ -38,10 +38,10 @@ export default function TextEditor() {
   const [isSaveModalVisible, setSaveModalVisible] = useState(false);
   const [tempFileName, setTempFileName] = useState('new-file.txt');
  
-  const { fileUri, fileName: filename, fileContent } = route.params || {};
+  const { fileUri,  filename, fileContent } = route.params || {};
 
   useEffect(() => {
-    if (fileUri && fileContent) {
+    if (fileUri ) {
       setCurrentFile(fileUri);
       setFileName(filename || 'untitled.txt');
       setContent(fileContent);

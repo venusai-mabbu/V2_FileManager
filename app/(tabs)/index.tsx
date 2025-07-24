@@ -114,7 +114,7 @@ const handleFilePress = async (file: FileItemType) => {
         const content = await readFileContent(file.uri); // ✅ read the file content
         navigation.navigate('editor', {
           fileUri: file.uri,
-          fileName: file.name,
+          filename: file.name,
           fileContent: content,
         });
       } catch (err) {
