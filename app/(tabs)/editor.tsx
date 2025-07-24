@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from 'react-native';
 import { Save, FileText, FolderOpen, Plus } from 'lucide-react-native';
 import * as FileSystem from 'expo-file-system';
@@ -21,11 +22,13 @@ import { readFileContent, writeFileContent, createFile } from '@/utils/fileUtils
 export default function TextEditor() {
   const { colors } = useTheme();
   const { currentPath, refreshFiles } = useFileSystem();
-  
+
   const [content, setContent] = useState('');
   const [fileName, setFileName] = useState('');
   const [currentFile, setCurrentFile] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaveModalVisible, setSaveModalVisible] = useState(false);
+  const [tempFileName, setTempFileName] = useState('new-file.txt');
 
   const styles = createStyles(colors);
 
@@ -36,7 +39,7 @@ export default function TextEditor() {
         copyToCacheDirectory: false,
       });
 
-      if (!result.canceled && result.assets[0]) {
+      if (!result.canceled && result.assets?.[0]) {
         const asset = result.assets[0];
         if (asset.mimeType?.startsWith('text/')) {
           const fileContent = await readFileContent(asset.uri);
@@ -54,18 +57,9 @@ export default function TextEditor() {
   };
 
   const saveFile = async () => {
-    if (!fileName.trim()) {
-      Alert.prompt(
-        'Save File',
-        'Enter a filename:',
-        async (name) => {
-          if (name && name.trim()) {
-            await saveFileWithName(name.trim());
-          }
-        },
-        'plain-text',
-        'new-file.txt'
-      );
+    if (!fileName || !fileName.trim()) {
+      setTempFileName('new-file.txt');
+      setSaveModalVisible(true);
       return;
     }
 
@@ -81,12 +75,12 @@ export default function TextEditor() {
 
       const filePath = currentFile || `${currentPath}/${finalName}`;
       await writeFileContent(filePath, content);
-      
+
       setFileName(finalName);
       setCurrentFile(filePath);
       setHasUnsavedChanges(false);
       await refreshFiles();
-      
+
       Alert.alert('Success', `${finalName} saved successfully`);
     } catch (error) {
       Alert.alert('Error', 'Failed to save file');
@@ -100,7 +94,7 @@ export default function TextEditor() {
         'You have unsaved changes. Do you want to save before creating a new file?',
         [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Don\'t Save', onPress: createNewFile },
+          { text: "Don't Save", onPress: createNewFile },
           { text: 'Save', onPress: async () => { await saveFile(); createNewFile(); } },
         ]
       );
@@ -121,10 +115,19 @@ export default function TextEditor() {
     setHasUnsavedChanges(true);
   };
 
+  const handleSaveFromModal = async () => {
+    if (!tempFileName.trim()) {
+      Alert.alert('Error', 'Filename cannot be empty');
+      return;
+    }
+    await saveFileWithName(tempFileName.trim());
+    setSaveModalVisible(false);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        style={styles.container} 
+      <KeyboardAvoidingView
+        style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.header}>
@@ -136,8 +139,8 @@ export default function TextEditor() {
             <TouchableOpacity style={styles.headerButton} onPress={openFile}>
               <FolderOpen size={20} color={colors.textSecondary} />
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.headerButton, hasUnsavedChanges && styles.saveButtonActive]} 
+            <TouchableOpacity
+              style={[styles.headerButton, hasUnsavedChanges && styles.saveButtonActive]}
               onPress={saveFile}
             >
               <Save size={20} color={hasUnsavedChanges ? colors.primary : colors.textSecondary} />
@@ -175,6 +178,53 @@ export default function TextEditor() {
           </Text>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Save Modal */}
+      <Modal
+        animationType="slide"
+        transparent
+        visible={isSaveModalVisible}
+        onRequestClose={() => setSaveModalVisible(false)}
+      >
+        <View style={{
+          flex: 1,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
+          <View style={{
+            backgroundColor: colors.surface,
+            padding: 20,
+            borderRadius: 10,
+            width: '80%',
+          }}>
+            <Text style={{ fontSize: 18, marginBottom: 10, color: colors.text }}>Enter file name</Text>
+            <TextInput
+              value={tempFileName}
+              onChangeText={setTempFileName}
+              placeholder="Filename"
+              placeholderTextColor={colors.textSecondary}
+              autoFocus
+              style={{
+                borderWidth: 1,
+                borderColor: colors.border,
+                padding: 10,
+                borderRadius: 5,
+                marginBottom: 15,
+                color: colors.text,
+              }}
+            />
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+              <TouchableOpacity onPress={() => setSaveModalVisible(false)}>
+                <Text style={{ marginRight: 20, color: 'red' }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleSaveFromModal}>
+                <Text style={{ color: 'blue' }}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

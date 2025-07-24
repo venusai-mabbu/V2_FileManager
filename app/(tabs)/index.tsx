@@ -104,7 +104,7 @@ export default function FileExplorer() {
       // Handle file opening based on type
       if (file.extension === 'txt' || file.extension === 'md') {
         // Navigate to text editor
-        Alert.alert('Info', 'Text editing will open in the Editor tab');
+        Alert.alert('Info', `Text editing will open in the Editor tab`);
       } else {
         Alert.alert('File Info', `Selected: ${file.name}\nSize: ${file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown'}`);
       }
@@ -134,9 +134,9 @@ export default function FileExplorer() {
         'Choose an action',
         [
           { text: 'Delete', onPress: () => handleFileAction(file, 0), style: 'destructive' },
-          { text: 'Rename', onPress: () => handleFileAction(file, 1) },
-          { text: 'Copy', onPress: () => handleFileAction(file, 2) },
           { text: 'Move', onPress: () => handleFileAction(file, 3) },
+          { text: 'Copy', onPress: () => handleFileAction(file, 2) },
+          { text: 'Rename', onPress: () => handleFileAction(file, 1) },
           { text: 'Cancel', style: 'cancel' },
         ]
       );

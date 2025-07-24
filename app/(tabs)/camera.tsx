@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { Camera as CameraIcon, SwitchCamera, X, Circle } from 'lucide-react-native';
+import { Camera as CameraIcon, SwitchCamera, Circle } from 'lucide-react-native';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { useTheme } from '@/context/ThemeContext';
@@ -17,6 +17,7 @@ import { useFileSystem } from '@/context/FileSystemContext';
 
 export default function CameraScreen() {
   const [facing, setFacing] = useState<CameraType>('back');
+  const [isTakingPhoto, setIsTakingPhoto] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const { colors } = useTheme();
@@ -54,44 +55,42 @@ export default function CameraScreen() {
   }
 
   const takePicture = async () => {
-    if (cameraRef.current) {
-      try {
-        const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.8,
-          base64: false,
-        });
+    if (isTakingPhoto || !cameraRef.current) return;
 
-        // Generate filename with timestamp
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const filename = `IMG_${timestamp}.jpg`;
-        
-        // Save to app directory
-        const appDirectory = `${FileSystem.documentDirectory}FileExplorer/Camera/`;
-        const finalPath = `${appDirectory}${filename}`;
-        
-        // Ensure directory exists
-        const dirInfo = await FileSystem.getInfoAsync(appDirectory);
-        if (!dirInfo.exists) {
-          await FileSystem.makeDirectoryAsync(appDirectory, { intermediates: true });
-        }
-        
-        // Copy photo to app directory
-        await FileSystem.copyAsync({
-          from: photo.uri,
-          to: finalPath,
-        });
+    setIsTakingPhoto(true);
 
-        // Save to media library (optional)
-        if (Platform.OS !== 'web') {
-          await MediaLibrary.createAssetAsync(photo.uri);
-        }
-        
-        await refreshFiles();
-        Alert.alert('Success', `Photo saved as ${filename}`);
-      } catch (error) {
-        console.error('Error taking picture:', error);
-        Alert.alert('Error', 'Failed to take picture');
+    try {
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.8,
+        base64: false,
+      });
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `IMG_${timestamp}.jpg`;
+      const appDirectory = `${FileSystem.documentDirectory}FileExplorer/Camera/`;
+      const finalPath = `${appDirectory}${filename}`;
+
+      const dirInfo = await FileSystem.getInfoAsync(appDirectory);
+      if (!dirInfo.exists) {
+        await FileSystem.makeDirectoryAsync(appDirectory, { intermediates: true });
       }
+
+      await FileSystem.copyAsync({
+        from: photo.uri,
+        to: finalPath,
+      });
+
+      if (Platform.OS !== 'web') {
+        await MediaLibrary.createAssetAsync(photo.uri);
+      }
+
+      await refreshFiles();
+      Alert.alert('Success', `Photo saved as ${filename}`);
+    } catch (error) {
+      console.error('Error taking picture:', error);
+      Alert.alert('Error', 'Failed to take picture');
+    } finally {
+      setIsTakingPhoto(false);
     }
   };
 
@@ -108,7 +107,7 @@ export default function CameraScreen() {
               <SwitchCamera size={24} color="white" />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.bottomControls}>
             <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
               <Circle size={60} color="white" fill="white" />
