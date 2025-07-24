@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Folder, CreditCard as Edit3, Camera, Settings } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
+import { Alert } from 'react-native';
 
 export default function TabLayout() {
   const { colors } = useTheme();

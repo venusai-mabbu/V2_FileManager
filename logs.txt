@@ -3,10 +3,11 @@
 2e4ae21 -- fixed editor screen and working on explorer(index.tsc)
 
 
-1f4f8cf  -- fixed explorer(index.tsx) for editor navigation for text files and directory navigation
+1f4f8cf
+17eae64  -- fixed explorer(index.tsx) for editor navigation for text files and directory navigation
          ( next--> 1.handle dynamic file navigation(useEffect) 
                    2.music and videos viewing
                    3.sort by debugging
-                            
+
                    
          ) 

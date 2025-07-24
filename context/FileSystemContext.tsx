@@ -28,6 +28,7 @@ const APP_DIRECTORY = `${FileSystem.documentDirectory}FileExplorer/`;
 const CAMERA_DIRECTORY = `${APP_DIRECTORY}Camera/`;
 const DOCUMENTS_DIRECTORY = `${APP_DIRECTORY}Documents/`;
 
+
 interface FileSystemProviderProps {
   children: ReactNode;
 }
@@ -53,19 +54,20 @@ export const FileSystemProvider: React.FC<FileSystemProviderProps> = ({ children
     }
   };
 
-  const refreshFiles = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const fileItems = await readDirectory(currentPath);
-      setFiles(fileItems);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load files');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const refreshFiles = async (path = currentPath) => {
+  //setLoading(true);
+  setError(null);
+
+  try {
+    const fileItems = await readDirectory(path);
+    setFiles(fileItems);
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Failed to load files');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const addToRecent = (filePath: string) => {
     setRecentFiles(prev => {

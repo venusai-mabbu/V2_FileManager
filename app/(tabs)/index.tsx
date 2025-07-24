@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo,useEffect } from 'react';
 import {
   View,
   Text,
@@ -32,6 +32,7 @@ import { createDirectory, createFile, deleteItem } from '@/utils/fileUtils';
 import { readFileContent } from '@/utils/fileUtils';
 
 export default function FileExplorer() {
+
   const { colors } = useTheme();
   const {
     currentPath,
@@ -49,6 +50,9 @@ export default function FileExplorer() {
   const [createType, setCreateType] = useState<'file' | 'folder'>('file');
   const [sortBy, setSortBy] = useState<SortBy>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+useEffect(() => {
+  refreshFiles();
+}, [currentPath]);
 
   const filteredAndSortedFiles = useMemo(() => {
     let filtered = files;
@@ -95,12 +99,14 @@ export default function FileExplorer() {
     }
   };
 
-  const navigateToDirectory = (path: string) => {
-    if (path !== currentPath) {
-      setCurrentPath(path);
-      refreshFiles();
-    }
-  };
+ const navigateToDirectory = (path: string) => {
+  if (path !== currentPath) {
+    setCurrentPath(path);
+    refreshFiles(path); // ✅ use updated path directly
+  }
+  setSearchQuery("");
+};
+
 
 const handleFilePress = async (file: FileItemType) => {
   if (file.isDirectory) {
@@ -280,6 +286,14 @@ const handleFileLongPress = (file: FileItemType) => {
     const parts = currentPath.split('/').filter(Boolean);
     return parts[parts.length - 1] || 'Root';
   };
+  const getSimplified = (path: string) => {
+  const marker = 'FileExplorer//';
+  const index = path.indexOf(marker);
+  if (index !== -1) {
+    return path.substring(index ); // returns part after "FileExplorer/"
+  }
+  return path; // fallback if "FileExplorer/" not found
+};
 
   const styles = createStyles(colors);
 
@@ -312,9 +326,9 @@ const handleFileLongPress = (file: FileItemType) => {
       </View>
 
       <View style={styles.pathBar}>
-        <Text style={styles.pathText} numberOfLines={1} ellipsizeMode="middle">
-          {currentPath}
-        </Text>
+        {(canGoBack)&&<Text style={styles.pathText} numberOfLines={2} ellipsizeMode="middle">
+          {getSimplified(currentPath)}
+        </Text>}
       </View>
 
       <SearchBar
@@ -396,7 +410,8 @@ const createStyles = (colors: any) => StyleSheet.create({
     borderBottomColor: colors.border,
   },
   pathText: {
-    fontSize: 12,
+    fontSize: 15,
+    paddingTop:7,
     color: colors.textSecondary,
     fontFamily: Platform.select({ ios: 'Courier', android: 'monospace' }),
   },
