@@ -7,7 +7,7 @@
 17eae64  -- fixed explorer(index.tsx) for editor navigation for text files and directory navigation
          ( next--> 1.handle dynamic file navigation(useEffect) 
                    2.music and videos viewing
-                   3.sort by debugging
-
-                   
+                   3.sort by debugging 
          ) 
+
+cf3a211  -- handled dynamic file navigation  

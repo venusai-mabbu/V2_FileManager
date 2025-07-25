@@ -25,7 +25,7 @@ export default function FileItem({ file, onPress, onLongPress, isGridView = fals
 
   const renderIcon = () => {
     if (file.isDirectory) {
-      return <FileFolder size={isGridView ? 32 : 24} color={colors.primary} />;
+      return <FileFolder size={isGridView ? 43 : 32} color={colors.primary} />;
     }
 
     if (isImageFile(file.name)) {
@@ -38,7 +38,7 @@ export default function FileItem({ file, onPress, onLongPress, isGridView = fals
       );
     }
 
-    return <File size={isGridView ? 32 : 24} color={fileType.color} />;
+    return <File size={isGridView ? 40 : 28} color={fileType.color} />;
   };
 
   const styles = createStyles(colors, isGridView);
@@ -59,7 +59,7 @@ export default function FileItem({ file, onPress, onLongPress, isGridView = fals
         </Text>
         {!file.isDirectory && file.size && (
           <Text style={styles.gridFileSize}>
-            {formatFileSize(file.size)}
+            {formatFileSize(file.size) }KB
           </Text>
         )}
       </TouchableOpacity>
@@ -102,16 +102,19 @@ const createStyles = (colors: any, isGridView: boolean) => StyleSheet.create({
   gridItem: {
     width: '48%',
     backgroundColor: colors.surface,
+    position:'relative',
     borderRadius: 12,
     padding: 16,
+    marginHorizontal:6,
     marginBottom: 16,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
+    
   },
   gridIconContainer: {
-    width: 60,
-    height: 60,
+    width: 45,
+    height: 45,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
@@ -120,6 +123,7 @@ const createStyles = (colors: any, isGridView: boolean) => StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 8,
+
   },
   gridFileName: {
     fontSize: 12,
@@ -132,6 +136,7 @@ const createStyles = (colors: any, isGridView: boolean) => StyleSheet.create({
     fontSize: 10,
     color: colors.textSecondary,
     marginTop: 4,
+    
   },
   listItem: {
     flexDirection: 'row',
@@ -142,6 +147,7 @@ const createStyles = (colors: any, isGridView: boolean) => StyleSheet.create({
     marginBottom: 8,
     borderWidth: 1,
     borderColor: colors.border,
+    overflow:'hidden'
   },
   listIconContainer: {
     width: 40,
@@ -149,10 +155,11 @@ const createStyles = (colors: any, isGridView: boolean) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
+    //overflow:'hidden'
   },
   listThumbnail: {
-    width: 32,
-    height: 32,
+    width: 59,
+    height: 59,
     borderRadius: 6,
   },
   listContent: {

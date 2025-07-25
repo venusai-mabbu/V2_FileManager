@@ -30,8 +30,10 @@ import CreateModal from '@/components/CreateModal';
 import { FileItem as FileItemType, SortBy, SortOrder } from '@/types/file';
 import { createDirectory, createFile, deleteItem } from '@/utils/fileUtils';
 import { readFileContent } from '@/utils/fileUtils';
+import { useRouter } from 'expo-router';
 
 export default function FileExplorer() {
+  const router = useRouter();
 
   const { colors } = useTheme();
   const {
@@ -308,6 +310,10 @@ const handleFileLongPress = (file: FileItemType) => {
           )}
           <Text style={styles.headerTitle}>{getCurrentDirectoryName()}</Text>
         </View>
+        <Text style={styles.headerTitle} onPress={() => router.push('/cam2')}>
+          Camera
+        </Text>
+
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.headerButton} onPress={() => setSortBy(sortBy === 'name' ? 'date' : 'name')}>
             <SortAsc size={20} color={colors.textSecondary} />
@@ -368,6 +374,7 @@ const handleFileLongPress = (file: FileItemType) => {
 const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
+    marginTop:30,
     backgroundColor: colors.background,
   },
   header: {

@@ -35,6 +35,7 @@ export default function TabLayout() {
           ),
         }}
       />
+     
       <Tabs.Screen
         name="editor"
         options={{
@@ -45,7 +46,7 @@ export default function TabLayout() {
         }}
       />
       
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="camera"
         options={{
           title: 'Camera',
@@ -53,7 +54,7 @@ export default function TabLayout() {
             <Camera size={size} color={color} />
           ),
         }}
-      />
+      /> */}
       <Tabs.Screen
         name="settings"
         options={{

@@ -25,7 +25,7 @@ export const useFileSystem = () => {
 };
 
 const APP_DIRECTORY = `${FileSystem.documentDirectory}FileExplorer/`;
-const CAMERA_DIRECTORY = `${APP_DIRECTORY}Camera/`;
+const CAMERA_DIRECTORY = `${APP_DIRECTORY}DCIM/`;
 const DOCUMENTS_DIRECTORY = `${APP_DIRECTORY}Documents/`;
 
 
