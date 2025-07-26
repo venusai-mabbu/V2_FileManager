@@ -11,13 +11,17 @@ import {
   RefreshControl,
   SafeAreaView,
 } from 'react-native';
+
 import {
   ArrowLeft,
   Plus,
+  Home,
   Grid3x3 as Grid3X3,
   List,
   Import as SortAsc,
 } from 'lucide-react-native';
+import { Camera as CameraIcon } from 'lucide-react-native';
+
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
@@ -31,6 +35,8 @@ import { FileItem as FileItemType, SortBy, SortOrder } from '@/types/file';
 import { createDirectory, createFile, deleteItem } from '@/utils/fileUtils';
 import { readFileContent } from '@/utils/fileUtils';
 import { useRouter } from 'expo-router';
+import ViewPic from '../../components/ViewPic';
+
 
 export default function FileExplorer() {
   const router = useRouter();
@@ -52,6 +58,10 @@ export default function FileExplorer() {
   const [createType, setCreateType] = useState<'file' | 'folder'>('file');
   const [sortBy, setSortBy] = useState<SortBy>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [showViewer, setShowViewer] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+
 useEffect(() => {
   refreshFiles();
 }, [currentPath]);
@@ -100,6 +110,9 @@ useEffect(() => {
       navigateToDirectory(parentPath);
     }
   };
+  const goToHome = () => {
+          navigateToDirectory(`${FileSystem.documentDirectory}FileExplorer/`);
+  };
 
  const navigateToDirectory = (path: string) => {
   if (path !== currentPath) {
@@ -116,6 +129,7 @@ const handleFilePress = async (file: FileItemType) => {
   } else {
     const extension = file.name.split('.').pop()?.toLowerCase();
     const textExtensions = ['txt', 'md', 'json', 'log'];
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp','svg'];
 
     if (textExtensions.includes(extension)) {
       try {
@@ -128,8 +142,12 @@ const handleFilePress = async (file: FileItemType) => {
       } catch (err) {
         Alert.alert('Error', 'Failed to read file');
       }
-    } else {
-      Alert.alert('File Info', `Selected: ${file.name}\nSize: ${file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown'}`);
+    } 
+    else if (imageExtensions.includes(extension)) 
+    {
+            //Alert.alert('Image Info',`Selected: ${file.name}\nSize: ${file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown'}`);
+            setSelectedImage(file.uri);
+            setShowViewer(true);
     }
   }
 };
@@ -153,12 +171,13 @@ const handleFileLongPress = (file: FileItemType) => {
       );
     } else {
       Alert.alert(
-        file.name,
+        // file.name,
+         file.uri,
         'Choose an action',
         [
           { text: 'Delete', onPress: () => handleFileAction(file, 0), style: 'destructive' },
-          { text: 'Move', onPress: () => handleFileAction(file, 3) },
-          { text: 'Copy', onPress: () => handleFileAction(file, 2) },
+          // { text: 'Move', onPress: () => handleFileAction(file, 3) },
+          // { text: 'Copy', onPress: () => handleFileAction(file, 2) },
           { text: 'Rename', onPress: () => handleFileAction(file, 1) },
           { text: 'Cancel', style: 'cancel' },
         ]
@@ -171,7 +190,7 @@ const handleFileLongPress = (file: FileItemType) => {
       case 0: // Delete
         Alert.alert(
           'Confirm Delete',
-          `Are you sure you want to delete "${file.name}"?`,
+          `Are you sure you want to delete "${typeof file.uri}"?`,   //string
           [
             { text: 'Cancel', style: 'cancel' },
             {
@@ -275,14 +294,27 @@ const handleFileLongPress = (file: FileItemType) => {
         }
       );
     } else {
-      Alert.alert('Create', 'Choose an option', [
-        { text: 'Create File', onPress: () => { setCreateType('file'); setCreateModalVisible(true); } },
-        { text: 'Create Folder', onPress: () => { setCreateType('folder'); setCreateModalVisible(true); } },
-        { text: 'Import File', onPress: handleImportFile },
-        { text: 'Cancel', style: 'cancel' },
-      ]);
-    }
-  };
+          // Alert.alert('Create', 'Choose an option', [
+          //   { text: 'Create File', onPress: () => { setCreateType('file'); setCreateModalVisible(true); } },
+          //   { text: 'Create Folder', onPress: () => { setCreateType('folder'); setCreateModalVisible(true); } },
+          //   { text: 'Import File', onPress: handleImportFile },
+          //   { text: 'Cancel', style: 'cancel' },
+          // ]);
+              Alert.alert('Create new', 'Choose an option', [
+              {
+                text: 'New File/Folder',
+                onPress: () =>
+                  Alert.alert('Create new File/Folder', '', [
+                    { text: 'Create File', onPress: () => { setCreateType('file'); setCreateModalVisible(true); }  },
+                    { text: 'Create Folder', onPress: () => { setCreateType('folder'); setCreateModalVisible(true); }  },
+                    { text: 'Cancel', style: 'cancel' },
+                  ]),
+              },
+              { text: 'Import File', onPress: handleImportFile },
+              { text: 'Cancel', style: 'cancel' },
+            ]);
+      }
+    };
 
   const getCurrentDirectoryName = () => {
     const parts = currentPath.split('/').filter(Boolean);
@@ -301,18 +333,21 @@ const handleFileLongPress = (file: FileItemType) => {
 
   return (
     <SafeAreaView style={styles.container}>
+
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          {canGoBack() && (
+          {canGoBack() ? (
             <TouchableOpacity style={styles.backButton} onPress={goBack}>
               <ArrowLeft size={24} color={colors.text} />
             </TouchableOpacity>
-          )}
-          <Text style={styles.headerTitle}>{getCurrentDirectoryName()}</Text>
+          ): <TouchableOpacity style={styles.backButton} onPress={goBack}>
+              <Home size={24} color={colors.text} />
+            </TouchableOpacity>
+          }
+          {/* <Text style={styles.headerTitle}>{getCurrentDirectoryName()}</Text> */}
+          <Text style={styles.headerTitle} onPress={goToHome}>VSFileManager</Text>
         </View>
-        <Text style={styles.headerTitle} onPress={() => router.push('/cam2')}>
-          Camera
-        </Text>
+      
 
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.headerButton} onPress={() => setSortBy(sortBy === 'name' ? 'date' : 'name')}>
@@ -328,29 +363,43 @@ const handleFileLongPress = (file: FileItemType) => {
           <TouchableOpacity style={styles.headerButton} onPress={showCreateOptions}>
             <Plus size={20} color={colors.primary} />
           </TouchableOpacity>
+
+          <TouchableOpacity style={styles.headerButton} onPress={() => router.push({ pathname: '/cam2', params: { currentPath } })}>
+            <CameraIcon size={24} color={colors.textSecondary} />            
+            {/* <Text style={styles.headerTitle} onPress={() => router.push({ pathname: '/cam2', params: { currentPath } })}>
+              Camera</Text>   */}
+
+          </TouchableOpacity>
+
         </View>
       </View>
 
       <View style={styles.pathBar}>
-        {(canGoBack)&&<Text style={styles.pathText} numberOfLines={2} ellipsizeMode="middle">
+        {(canGoBack())&&<Text style={styles.pathText} numberOfLines={1} ellipsizeMode="middle">
           {getSimplified(currentPath)}
         </Text>}
       </View>
 
-      <SearchBar
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onClearSearch={() => setSearchQuery('')}
-      />
+      <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} onClearSearch={() => setSearchQuery('')}/>
+       
+        {selectedImage && (
+        <ViewPic
+          visible={showViewer}
+          image={selectedImage}
+          onClose={() => setShowViewer(false)}
+          //onInfo={()=> Alert.alert('Image Info',`Selected: ${selectedImage}\nSize:'Unknown'`)}
+         // onDelete={() => setShowViewer(false)}   //(file, 0)
+        />
+      )}
 
       <FlatList
         data={filteredAndSortedFiles}
         renderItem={({ item }) => (
           <FileItem
-            file={item}
-            onPress={handleFilePress}
-            onLongPress={handleFileLongPress}
-            isGridView={settings.gridView}
+          file={item}
+          onPress={handleFilePress}
+          onLongPress={handleFileLongPress}
+          isGridView={settings.gridView}
           />
         )}
         keyExtractor={(item) => item.uri}

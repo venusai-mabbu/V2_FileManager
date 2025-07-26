@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { Camera as CameraIcon, SwitchCamera } from 'lucide-react-native';
+import { useLocalSearchParams } from 'expo-router';
+
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { useTheme } from '@/context/ThemeContext';
@@ -26,6 +28,9 @@ export default function CameraScreen() {
   const { refreshFiles } = useFileSystem();
 
   const styles = createStyles(colors);
+
+  const { currentPath } = useLocalSearchParams();
+
 
   if (!permission) {
     return (
@@ -69,9 +74,10 @@ export default function CameraScreen() {
     }
 
     try {
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
+        const photo = await cameraRef.current.takePictureAsync({
+        quality: 1,
         base64: false,
+      //  skipProcessing: true, // optional: reduces image processing delay
       });
 
       if (!photo || !photo.uri) {
@@ -84,7 +90,9 @@ export default function CameraScreen() {
         .replace(/[:.]/g, '-')
         .split('.')[0]; // Remove milliseconds
       const filename = `IMG_${timestamp}.jpg`;
-      const appDirectory = `${FileSystem.documentDirectory}FileExplorer/VENUSAI/`;
+      //const appDirectory = `${FileSystem.documentDirectory}FileExplorer/DCIM/Venu/`;
+      const appDirectory = currentPath+'/';
+
       const finalPath = `${appDirectory}${filename}`;
 
       // Ensure directory exists
@@ -115,12 +123,12 @@ export default function CameraScreen() {
       // Refresh file system
       await refreshFiles();
       
-      Alert.alert(
-        'Success', 
-        Platform.OS === 'web' 
-          ? `Photo saved as ${filename}` 
-          : `Photo saved as ${filename} and added to gallery`
-      );
+      // Alert.alert(
+      //   'Success', 
+      //   Platform.OS === 'web' 
+      //     ? `Photo saved as ${filename}` 
+      //     : `Photo saved as ${filename} and added to gallery`
+      // );
 
     } catch (error) {
       console.error('Error taking picture:', error);
