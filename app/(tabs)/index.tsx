@@ -145,10 +145,14 @@ const handleFilePress = async (file: FileItemType) => {
     } 
     else if (imageExtensions.includes(extension)) 
     {
-            //Alert.alert('Image Info',`Selected: ${file.name}\nSize: ${file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown'}`);
-            setSelectedImage(file.uri);
-            setShowViewer(true);
+      //Alert.alert('Image Info',`Selected: ${file.name}\nSize: ${file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown'}`);
+      setSelectedImage(file.uri);
+      setShowViewer(true);
     }
+    else 
+      {
+        Alert.alert('Image Info',`Selected: ${file.name}\nSize: ${file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown'}`);
+      }
   }
 };
 
@@ -387,8 +391,6 @@ const handleFileLongPress = (file: FileItemType) => {
           visible={showViewer}
           image={selectedImage}
           onClose={() => setShowViewer(false)}
-          //onInfo={()=> Alert.alert('Image Info',`Selected: ${selectedImage}\nSize:'Unknown'`)}
-         // onDelete={() => setShowViewer(false)}   //(file, 0)
         />
       )}
 

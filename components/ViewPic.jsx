@@ -55,7 +55,7 @@ const ViewPic = ({ visible, image, onClose }) => {
 
         {/* Top-right controls */}
         <View style={styles.controls}>
-          <TouchableOpacity onPress={()=>Alert.alert('',image)} style={styles.iconButton}>
+          <TouchableOpacity onPress={()=>Alert.alert('File Info:',image)} style={styles.iconButton}>
             <Info color="white" size={24} />
           </TouchableOpacity>
           <TouchableOpacity onPress={()=>deleteImage(image)} style={styles.iconButton}>
