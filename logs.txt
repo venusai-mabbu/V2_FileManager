@@ -14,3 +14,4 @@ cf3a211  -- handled dynamic file navigation
 2ce6cd4  -- handled camera refresh problem 
 
 68ff211  -- added image display modal working checkpoint 
+56bd628  -- added image display modal working checkpoint 

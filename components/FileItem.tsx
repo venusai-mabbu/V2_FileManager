@@ -5,8 +5,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  StyleSheetProperties,
 } from 'react-native';
-import { Folder as FileFolder, File, Image as ImageIcon } from 'lucide-react-native';
+import { Folder as FileFolder, File } from 'lucide-react-native';
 import { FileItem as FileItemType } from '../types/file';
 import { getFileType } from '../constants/FileTypes';
 import { formatFileSize, formatDate, isImageFile } from '../utils/fileUtils';
@@ -22,26 +23,8 @@ interface FileItemProps {
 export default function FileItem({ file, onPress, onLongPress, isGridView = false }: FileItemProps) {
   const { colors } = useTheme();
   const fileType = getFileType(file.name);
-
-  const renderIcon = () => {
-    if (file.isDirectory) {
-      return <FileFolder size={isGridView ? 43 : 32} color={colors.primary} />;
-    }
-
-    if (isImageFile(file.name)) {
-      return (
-        <Image
-          source={{ uri: file.uri }}
-          style={isGridView ? styles.gridThumbnail : styles.listThumbnail}
-          resizeMode="cover"
-        />
-      );
-    }
-
-    return <File size={isGridView ? 40 : 28} color={fileType.color} />;
-  };
-
   const styles = createStyles(colors, isGridView);
+  const isImage = isImageFile(file.name);
 
   if (isGridView) {
     return (
@@ -49,23 +32,54 @@ export default function FileItem({ file, onPress, onLongPress, isGridView = fals
         style={styles.gridItem}
         onPress={() => onPress(file)}
         onLongPress={() => onLongPress(file)}
-        activeOpacity={0.7}
+        activeOpacity={0.8}
       >
-        <View style={styles.gridIconContainer}>
-          {renderIcon()}
-        </View>
-        <Text style={styles.gridFileName} numberOfLines={2}>
-          {file.name}
-        </Text>
-        {!file.isDirectory && file.size && (
-          <Text style={styles.gridFileSize}>
-            {formatFileSize(file.size)} MB
-          </Text>
+        {/* Background image for image files */}
+        {isImage && (
+          <Image
+            source={{ uri: file.uri }}
+            style={StyleSheet.absoluteFillObject}
+            resizeMode="cover"
+          />
+        )}
+
+        {/* File size overlay on top right for images */}
+        {!file.isDirectory && isImage && file.size && (
+          <View style={styles.gridOverlay}>
+            <Text style={styles.gridOverlayText}>
+              {formatFileSize(file.size)}
+            </Text>
+          </View>
+        )}
+
+        {/* Non-image content */}
+        {!isImage && (
+          <View style={styles.gridIconOnlyContainer}>
+            <View style={styles.gridIconContainer}>
+              {file.isDirectory ? (
+                <FileFolder size={48} color={colors.primary} />
+              ) : (
+                <File size={44} color={fileType.color} />
+              )}
+            </View>
+
+            <View style={styles.gridMetaBottom}>
+              <Text style={styles.gridFileName} numberOfLines={2}>
+                {file.name}
+              </Text>
+              {!file.isDirectory && file.size && (
+                <Text style={styles.gridFileSize}>
+                  {formatFileSize(file.size)} MB
+                </Text>
+              )}
+            </View>
+          </View>
         )}
       </TouchableOpacity>
     );
   }
 
+  // --- List View ---
   return (
     <TouchableOpacity
       style={styles.listItem}
@@ -74,9 +88,19 @@ export default function FileItem({ file, onPress, onLongPress, isGridView = fals
       activeOpacity={0.7}
     >
       <View style={styles.listIconContainer}>
-        {renderIcon()}
+        {file.isDirectory ? (
+          <FileFolder size={32} color={colors.primary} />
+        ) : isImage ? (
+          <Image
+            source={{ uri: file.uri }}
+            style={styles.listThumbnail}
+            resizeMode="cover"
+          />
+        ) : (
+          <File size={28} color={fileType.color} />
+        )}
       </View>
-      
+
       <View style={styles.listContent}>
         <Text style={styles.listFileName} numberOfLines={1}>
           {file.name}
@@ -99,45 +123,62 @@ export default function FileItem({ file, onPress, onLongPress, isGridView = fals
 }
 
 const createStyles = (colors: any, isGridView: boolean) => StyleSheet.create({
+  // --- GRID VIEW ---
   gridItem: {
     width: '48%',
-    backgroundColor: colors.surface,
-    position:'relative',
+    aspectRatio: 1,
+    margin: '1%',
     borderRadius: 12,
-    padding: 16,
-    marginHorizontal:6,
-    marginBottom: 16,
-    alignItems: 'center',
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    
   },
-  gridIconContainer: {
-    width: 45,
-    height: 45,
+  gridIconOnlyContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
   },
-  gridThumbnail: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-
+  gridIconContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gridMetaBottom: {
+    position: 'absolute',
+    bottom: 10,
+    left: 8,
+    right: 8,
+    alignItems: 'center',
   },
   gridFileName: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.text,
     textAlign: 'center',
     fontWeight: '500',
-    lineHeight: 16,
+    marginBottom: 2,
   },
   gridFileSize: {
-    fontSize: 10,
+    fontSize: 11,
     color: colors.textSecondary,
-    marginTop: 4,
-    
   },
+  gridOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    zIndex: 2,
+  },
+  gridOverlayText: {
+    fontSize: 11,
+    color: 'white',
+    fontWeight: '600',
+  },
+
+  // --- LIST VIEW ---
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -147,7 +188,7 @@ const createStyles = (colors: any, isGridView: boolean) => StyleSheet.create({
     marginBottom: 8,
     borderWidth: 1,
     borderColor: colors.border,
-    overflow:'hidden'
+    overflow: 'hidden',
   },
   listIconContainer: {
     width: 40,
@@ -155,7 +196,6 @@ const createStyles = (colors: any, isGridView: boolean) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
-    //overflow:'hidden'
   },
   listThumbnail: {
     width: 59,

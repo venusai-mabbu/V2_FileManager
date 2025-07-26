@@ -243,6 +243,7 @@ const handleFileLongPress = (file: FileItemType) => {
 
   const handleCreate = (name: string, content?: string) => {
     if (createType === 'file') {
+
       handleCreateFile(name, content);
     } else {
       handleCreateFolder(name);
@@ -380,7 +381,7 @@ const handleFileLongPress = (file: FileItemType) => {
 
       <View style={styles.pathBar}>
         {(canGoBack())&&<Text style={styles.pathText} numberOfLines={1} ellipsizeMode="middle">
-          {getSimplified(currentPath)}
+         <Text>{getSimplified(currentPath)} </Text> 
         </Text>}
       </View>
 
