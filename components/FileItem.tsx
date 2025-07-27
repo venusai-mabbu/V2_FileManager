@@ -69,7 +69,7 @@ export default function FileItem({ file, onPress, onLongPress, isGridView = fals
               </Text>
               {!file.isDirectory && file.size && (
                 <Text style={styles.gridFileSize}>
-                  {formatFileSize(file.size)} MB
+                    {`${formatFileSize(file.size)} MB`}
                 </Text>
               )}
             </View>

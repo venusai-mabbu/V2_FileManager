@@ -1,3 +1,5 @@
+LOGS:
+
 17fc81e -- initial projec with UI and no navigation and destination upload
 
 2e4ae21 -- fixed editor screen and working on explorer(index.tsc)
@@ -15,3 +17,5 @@ cf3a211  -- handled dynamic file navigation
 
 68ff211  -- added image display modal working checkpoint 
 56bd628  -- added image display modal working checkpoint 
+65d407e  -- added image display modal working checkpoint 
+ 
