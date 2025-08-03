@@ -10,7 +10,7 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
-  Modal,
+  Modal,Pressable
 } from 'react-native';
 import { Save, FileText, FolderOpen, Plus } from 'lucide-react-native';
 import * as FileSystem from 'expo-file-system';
@@ -198,25 +198,34 @@ export default function TextEditor() {
       </KeyboardAvoidingView>
 
       {/* Save Modal */}
+
       <Modal
         animationType="slide"
         transparent
         visible={isSaveModalVisible}
         onRequestClose={() => setSaveModalVisible(false)}
       >
-        <View style={{
-          flex: 1,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}>
-          <View style={{
-            backgroundColor: colors.surface,
-            padding: 20,
-            borderRadius: 10,
-            width: '80%',
-          }}>
-            <Text style={{ fontSize: 18, marginBottom: 10, color: colors.text }}>Enter file name</Text>
+        <Pressable
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+          onPress={() => setSaveModalVisible(false)} // dismiss when pressing outside
+        >
+          <Pressable
+            onPress={() => {}} // stop propagation
+            style={{
+              backgroundColor: colors.surface,
+              padding: 20,
+              borderRadius: 10,
+              width: '80%',
+            }}
+          >
+            <Text style={{ fontSize: 18, marginBottom: 10, color: colors.text }}>
+              Enter file name
+            </Text>
             <TextInput
               value={tempFileName}
               onChangeText={setTempFileName}
@@ -240,9 +249,10 @@ export default function TextEditor() {
                 <Text style={{ color: 'blue' }}>Save</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
+
     </SafeAreaView>
   );
 }

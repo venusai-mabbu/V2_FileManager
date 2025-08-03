@@ -24,9 +24,9 @@ export const useFileSystem = () => {
   return context;
 };
 
-const APP_DIRECTORY = `${FileSystem.documentDirectory}FileExplorer/`;
-const CAMERA_DIRECTORY = `${APP_DIRECTORY}DCIM/`;
-const DOCUMENTS_DIRECTORY = `${APP_DIRECTORY}Documents/`;
+const APP_DIRECTORY = `${FileSystem.documentDirectory}FileExplorer`;
+const CAMERA_DIRECTORY = `${APP_DIRECTORY}/DCIM/`;
+const DOCUMENTS_DIRECTORY = `${APP_DIRECTORY}/Documents/`;
 
 
 interface FileSystemProviderProps {

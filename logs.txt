@@ -18,4 +18,6 @@ cf3a211  -- handled dynamic file navigation
 68ff211  -- added image display modal working checkpoint 
 56bd628  -- added image display modal working checkpoint 
 65d407e  -- added image display modal working checkpoint 
- 
+
+
+216720e  -- Fixed text segment error

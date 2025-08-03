@@ -36,7 +36,9 @@ import { createDirectory, createFile, deleteItem } from '@/utils/fileUtils';
 import { readFileContent } from '@/utils/fileUtils';
 import { useRouter } from 'expo-router';
 import ViewPic from '../../components/ViewPic';
-
+import ActionModal from '@/components/ActionModal';
+import RenameModal from '@/components/RenameModal' 
+import { AudioPlayerComponent,VideoPlayerComponent } from '@/components/mediaPlayerComponent';
 
 export default function FileExplorer() {
   const router = useRouter();
@@ -58,8 +60,26 @@ export default function FileExplorer() {
   const [createType, setCreateType] = useState<'file' | 'folder'>('file');
   const [sortBy, setSortBy] = useState<SortBy>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+
   const [showViewer, setShowViewer] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+    const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+    const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+
+    const [selectedAudio, setSelectedAudio] = useState<string | null>(null);
+    const [showAudioPlayer, setShowAudioPlayer] = useState(false);
+
+
+  const [isFileModalVisible, setFileModalVisible] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<FileItemType | null>(null);
+
+  const [renameModalVisible, setRenameModalVisible] = useState(false);
+  const [fileToRename, setFileToRename] = useState(null);
+
+  const [copySourcePath,setCopySourcePath]=useState('');
+  const [cutSourcePath,setCutSourcePath]=useState('');
+  //const [pasteDestination,setPasteDestination]=useState('');
 
 
 useEffect(() => {
@@ -100,7 +120,7 @@ useEffect(() => {
   }, [files, searchQuery, sortBy, sortOrder]);
 
   const canGoBack = () => {
-    const basePath = `${FileSystem.documentDirectory}FileExplorer/`;
+    const basePath = `${FileSystem.documentDirectory}FileExplorer`;
     return currentPath !== basePath;
   };
 
@@ -129,7 +149,9 @@ const handleFilePress = async (file: FileItemType) => {
   } else {
     const extension = file.name.split('.').pop()?.toLowerCase();
     const textExtensions = ['txt', 'md', 'json', 'log'];
-  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp','svg'];
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+    const videoExtensions = ['mp4', 'mkv', 'mov', 'avi', 'webm'];
+    const musicExtensions = ['mp3', 'wav', 'aac', 'ogg', 'flac'];
 
     if (textExtensions.includes(extension)) {
       try {
@@ -145,9 +167,16 @@ const handleFilePress = async (file: FileItemType) => {
     } 
     else if (imageExtensions.includes(extension)) 
     {
-      //Alert.alert('Image Info',`Selected: ${file.name}\nSize: ${file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown'}`);
       setSelectedImage(file.uri);
       setShowViewer(true);
+    }
+    else if (videoExtensions.includes(extension)) {
+      setSelectedVideo(file.uri);
+      setShowVideoPlayer(true);
+    }
+    else if (musicExtensions.includes(extension)) {
+      setSelectedAudio(file.uri);
+      setShowAudioPlayer(true);
     }
     else 
       {
@@ -156,68 +185,106 @@ const handleFilePress = async (file: FileItemType) => {
   }
 };
 
-const handleFileLongPress = (file: FileItemType) => {
-    const options = ['Delete', 'Rename', 'Copy', 'Move', 'Cancel'];
-    const destructiveButtonIndex = 0;
-    const cancelButtonIndex = 4;
+const handleFileLongPress = (file:FileItemType) => {
+  setSelectedFile(file);
+  setFileModalVisible(true); // show ActionModal
+};
 
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options,
-          destructiveButtonIndex,
-          cancelButtonIndex,
-          title: file.name,
-        },
-        (buttonIndex) => {
-          handleFileAction(file, buttonIndex);
-        }
-      );
-    } else {
+
+const handleRenameConfirm = async (newName) => {
+  if (!fileToRename) return;
+
+  const oldPath = fileToRename;
+  const parentDir = oldPath.substring(0, oldPath.lastIndexOf('/'));
+  const newPath = `${parentDir}/${newName}`;
+
+  try {
+    await FileSystem.moveAsync({ from: oldPath, to: newPath });
+    await refreshFiles();
+  } catch (error) {
+    Alert.alert('Error', 'Failed to rename item');
+  } finally {
+    setRenameModalVisible(false);
+    setFileToRename(null);
+  }
+};
+
+
+ const handleFileAction = async (file, actionIndex) => {
+  switch (actionIndex) {
+    case 0: // Delete
       Alert.alert(
-        // file.name,
-         file.uri,
-        'Choose an action',
+        'Confirm Delete',
+        `Are you sure you want to delete "${file.name}"?`,
         [
-          { text: 'Delete', onPress: () => handleFileAction(file, 0), style: 'destructive' },
-          // { text: 'Move', onPress: () => handleFileAction(file, 3) },
-          // { text: 'Copy', onPress: () => handleFileAction(file, 2) },
-          { text: 'Rename', onPress: () => handleFileAction(file, 1) },
           { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await deleteItem(file.uri);
+                await refreshFiles();
+              } catch (error) {
+                Alert.alert('Error', 'Failed to delete item');
+              }
+            },
+          },
         ]
       );
-    }
-  };
+      break;
+    case 1: // Rename
+      setFileToRename(`${currentPath}/${file.name}`);
+      setRenameModalVisible(true);
+      break;
+    case 2: // Copy
+      setCopySourcePath(`${currentPath}/${file.name}`)
+      setCutSourcePath('')
+      break;
+    case 3: // Move
+      setCutSourcePath(`${currentPath}/${file.name}`)
+      setCopySourcePath('')
+      break;
 
-  const handleFileAction = async (file: FileItemType, actionIndex: number) => {
-    switch (actionIndex) {
-      case 0: // Delete
-        Alert.alert(
-          'Confirm Delete',
-          `Are you sure you want to delete "${typeof file.uri}"?`,   //string
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Delete',
-              style: 'destructive',
-              onPress: async () => {
-                try {
-                  await deleteItem(file.uri);
-                  await refreshFiles();
-                } catch (error) {
-                  Alert.alert('Error', 'Failed to delete item');
-                }
-              },
-            },
-          ]
-        );
-        break;
-      case 1: // Rename
-        // TODO: Replace with a custom rename modal like CreateModal
-        Alert.alert('Rename not supported on Android yet', 'Use modal to enter new name.');
-        break;
+    case 4: // Paste
+  try {
+    if (copySourcePath) {
+      const fileName = copySourcePath.split('/').pop();
+      const destPath = `${currentPath}/${fileName}`;
+
+      await FileSystem.copyAsync({
+        from: copySourcePath,
+        to: destPath,
+      });
+
+      // Alert.alert('Copied Successfully', `File copied to ${currentPath}`);
+    } else if (cutSourcePath) {
+      const fileName = cutSourcePath.split('/').pop();
+      const destPath = `${currentPath}/${fileName}`;
+
+      await FileSystem.moveAsync({
+        from: cutSourcePath,
+        to: destPath,
+      });
+
+      // Alert.alert('Moved Successfully', `File moved to ${currentPath}`);
+    } else {
+      Alert.alert('Nothing to Paste', 'No copied or cut file found.');
     }
-  };
+
+    // Reset both after pasting
+    setCutSourcePath('');
+    setCopySourcePath('');
+
+    await refreshFiles(); // Refresh file list
+  } catch (error) {
+    Alert.alert('Error', 'Failed to perform paste operation');
+  }
+  break;
+
+  }
+};
+
 
   const handleCreateFile = async (name: string, content?: string) => {
     try {
@@ -326,7 +393,7 @@ const handleFileLongPress = (file: FileItemType) => {
     return parts[parts.length - 1] || 'Root';
   };
   const getSimplified = (path: string) => {
-  const marker = 'FileExplorer//';
+  const marker = 'FileExplorer/';
   const index = path.indexOf(marker);
   if (index !== -1) {
     return path.substring(index ); // returns part after "FileExplorer/"
@@ -381,20 +448,36 @@ const handleFileLongPress = (file: FileItemType) => {
 
       <View style={styles.pathBar}>
         {(canGoBack())&&<Text style={styles.pathText} numberOfLines={1} ellipsizeMode="middle">
-         <Text>{getSimplified(currentPath)} </Text> 
+         <Text>{canGoBack() &&getSimplified(currentPath)} </Text> 
         </Text>}
       </View>
 
       <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} onClearSearch={() => setSearchQuery('')}/>
        
-        {selectedImage && (
-        <ViewPic
-          visible={showViewer}
-          image={selectedImage}
-          onClose={() => setShowViewer(false)}
-        />
-      )}
+        <View>
+              {selectedImage && (
+                  <ViewPic
+                    visible={showViewer}
+                    image={selectedImage}
+                    onClose={() => setShowViewer(false)}
+                  />
+                )}
 
+                {selectedVideo && showVideoPlayer && (
+                  <VideoPlayerComponent
+                    uri={selectedVideo}
+                    onClose={() => setShowVideoPlayer(false)}
+                  />
+                )}
+
+                {selectedAudio && showAudioPlayer && (
+                  <AudioPlayerComponent
+                    uri={selectedAudio}
+                    onClose={() => setShowAudioPlayer(false)}
+                  />
+                )}
+   
+        </View>
       <FlatList
         data={filteredAndSortedFiles}
         renderItem={({ item }) => (
@@ -419,6 +502,21 @@ const handleFileLongPress = (file: FileItemType) => {
         onClose={() => setCreateModalVisible(false)}
         onCreate={handleCreate}
       />
+      <ActionModal
+          visible={isFileModalVisible}
+          onClose={() => setFileModalVisible(false)}
+          selectedFile={selectedFile}
+          onAction={handleFileAction}
+        />
+        {/* remove this part*/ }
+     <RenameModal
+        visible={renameModalVisible}
+        file={fileToRename}
+        onClose={() => setRenameModalVisible(false)}
+        onRename={handleRenameConfirm}
+      />
+
+      
     </SafeAreaView>
   );
 }
