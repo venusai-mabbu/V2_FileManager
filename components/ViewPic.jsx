@@ -21,7 +21,7 @@ const ViewPic = ({ visible, image, onClose }) => {
   {
      Alert.alert(
               'Confirm Delete',
-              `Are you sure you want to delete ?${typeof file}`,  
+              `Are you sure you want to delete ?${file}`,  
               [
                 { text: 'Cancel', style: 'cancel' },
                 {

@@ -77,7 +77,7 @@ export default function CameraScreen() {
         const photo = await cameraRef.current.takePictureAsync({
         quality: 1,
         base64: false,
-      //  skipProcessing: true, // optional: reduces image processing delay
+        skipProcessing: true, // optional: reduces image processing delay
       });
 
       if (!photo || !photo.uri) {

@@ -99,7 +99,7 @@ export const VideoPlayerComponent = ({ uri, onClose }) => {
         />
 
         <Slider
-          style={styles.slider}
+          style={styles.videoSlider}
           minimumValue={0}
           maximumValue={duration}
           value={progress}
@@ -249,7 +249,7 @@ export const AudioPlayerComponent = ({ uri, title = 'Unknown Title', artist = ''
         ) : null}
 
         <Slider
-          style={styles.slider}
+          style={styles.audioSlider}
           minimumValue={0}
           maximumValue={duration}
           value={position}
@@ -331,10 +331,18 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 30,
   },
-  slider: {
+  audioSlider: {
     position: 'absolute',
     // bottom: 110,
     top:500,
+    width: width * 0.9,
+    alignSelf: 'center',
+    height: 40,
+
+  },
+  videoSlider: {
+    position: 'absolute',
+    bottom: 110,
     width: width * 0.9,
     alignSelf: 'center',
     height: 40,

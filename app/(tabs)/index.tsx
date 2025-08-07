@@ -11,7 +11,6 @@ import {
   RefreshControl,
   SafeAreaView,
 } from 'react-native';
-
 import {
   ArrowLeft,
   Plus,
@@ -131,7 +130,7 @@ useEffect(() => {
     }
   };
   const goToHome = () => {
-          navigateToDirectory(`${FileSystem.documentDirectory}FileExplorer/`);
+        navigateToDirectory(`${FileSystem.documentDirectory}FileExplorer/`);
   };
 
  const navigateToDirectory = (path: string) => {
@@ -180,7 +179,7 @@ const handleFilePress = async (file: FileItemType) => {
     }
     else 
       {
-        Alert.alert('Image Info',`Selected: ${file.name}\nSize: ${file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown'}`);
+        Alert.alert('File Info',`Selected: ${file.name}\nSize: ${file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown'}`);
       }
   }
 };
@@ -209,6 +208,42 @@ const handleRenameConfirm = async (newName) => {
   }
 };
 
+const handlePaste=async()=>{
+ try {
+    if (copySourcePath) {
+      const fileName = copySourcePath.split('/').pop();
+      const destPath = `${currentPath}/${fileName}`;
+
+      await FileSystem.copyAsync({
+        from: copySourcePath,
+        to: destPath,
+      });
+
+      // Alert.alert('Copied Successfully', `File copied to ${currentPath}`);
+    } else if (cutSourcePath) {
+      const fileName = cutSourcePath.split('/').pop();
+      const destPath = `${currentPath}/${fileName}`;
+
+      await FileSystem.moveAsync({
+        from: cutSourcePath,
+        to: destPath,
+      });
+
+      // Alert.alert('Moved Successfully', `File moved to ${currentPath}`);
+    } else {
+      Alert.alert('Nothing to Paste', 'No copied or cut file found.');
+    }
+
+    // Reset both after pasting
+    setCutSourcePath('');
+    setCopySourcePath('');
+
+    await refreshFiles(); // Refresh file list
+  } catch (error) {
+    Alert.alert('Error', 'Failed to perform paste operation');
+  }
+
+}
 
  const handleFileAction = async (file, actionIndex) => {
   switch (actionIndex) {
@@ -245,42 +280,6 @@ const handleRenameConfirm = async (newName) => {
       setCutSourcePath(`${currentPath}/${file.name}`)
       setCopySourcePath('')
       break;
-
-    case 4: // Paste
-  try {
-    if (copySourcePath) {
-      const fileName = copySourcePath.split('/').pop();
-      const destPath = `${currentPath}/${fileName}`;
-
-      await FileSystem.copyAsync({
-        from: copySourcePath,
-        to: destPath,
-      });
-
-      // Alert.alert('Copied Successfully', `File copied to ${currentPath}`);
-    } else if (cutSourcePath) {
-      const fileName = cutSourcePath.split('/').pop();
-      const destPath = `${currentPath}/${fileName}`;
-
-      await FileSystem.moveAsync({
-        from: cutSourcePath,
-        to: destPath,
-      });
-
-      // Alert.alert('Moved Successfully', `File moved to ${currentPath}`);
-    } else {
-      Alert.alert('Nothing to Paste', 'No copied or cut file found.');
-    }
-
-    // Reset both after pasting
-    setCutSourcePath('');
-    setCopySourcePath('');
-
-    await refreshFiles(); // Refresh file list
-  } catch (error) {
-    Alert.alert('Error', 'Failed to perform paste operation');
-  }
-  break;
 
   }
 };
@@ -447,9 +446,9 @@ const handleRenameConfirm = async (newName) => {
       </View>
 
       <View style={styles.pathBar}>
-        {(canGoBack())&&<Text style={styles.pathText} numberOfLines={1} ellipsizeMode="middle">
-         <Text>{canGoBack() &&getSimplified(currentPath)} </Text> 
-        </Text>}
+          <Text style={styles.pathText} numberOfLines={1} ellipsizeMode="middle">
+            {canGoBack() ? getSimplified(currentPath) : ''}
+          </Text>
       </View>
 
       <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} onClearSearch={() => setSearchQuery('')}/>
@@ -495,6 +494,24 @@ const handleRenameConfirm = async (newName) => {
         refreshControl={<RefreshControl refreshing={loading} onRefresh={refreshFiles} tintColor={colors.primary} />}
         showsVerticalScrollIndicator={false}
       />
+
+      {(copySourcePath !== '' || cutSourcePath !== '') && (
+  <TouchableOpacity
+    onPress={handlePaste}
+    style={{
+      backgroundColor: '#4CAF50',
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      borderRadius: 6,
+      alignSelf: 'flex-end', // or 'center' depending on layout
+      margin: 8,
+    }}
+  >
+    <Text style={{ color: 'white', fontSize: 14, fontWeight: 'bold' }}>Paste</Text>
+  </TouchableOpacity>
+)}
+
+
 
       <CreateModal
         visible={createModalVisible}
@@ -576,4 +593,13 @@ const createStyles = (colors: any) => StyleSheet.create({
     padding: 16,
     paddingBottom: 32,
   },
+  pasteText:
+  {
+    fontSize:18,
+    margin:20,
+    color:colors.primary,
+    position:'absolute',
+    right:25,
+    bottom:20,
+  }
 });

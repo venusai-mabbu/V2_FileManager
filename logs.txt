@@ -21,3 +21,4 @@ cf3a211  -- handled dynamic file navigation
 
 
 216720e  -- Fixed text segment error
+32c2e07  -- added music and video component but getting text component error again. Balance work: handling sort  by category and paste UI ENHANCE

@@ -63,7 +63,8 @@ export default function CreateModal({ visible, type, onClose, onCreate }: Create
             ) : (
               <File size={24} color={colors.primary} />
             )}
-            <Text style={styles.title}>Create {type === 'folder' ? 'Folder' : 'File'}</Text>
+            {/* <Text style={styles.title}>Create {type === 'folder' ? 'Folder' : 'File'}</Text> */}
+            <Text style={styles.title}>Create </Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
               <X size={24} color={colors.textSecondary} />
             </TouchableOpacity>

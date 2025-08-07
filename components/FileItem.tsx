@@ -67,9 +67,9 @@ export default function FileItem({ file, onPress, onLongPress, isGridView = fals
               <Text style={styles.gridFileName} numberOfLines={2}>
                 {file.name}
               </Text>
-              {!file.isDirectory && file.size && (
+              {!file.isDirectory && (
                 <Text style={styles.gridFileSize}>
-                    {`${formatFileSize(file.size)} MB`}
+                    {formatFileSize(file.size)}
                 </Text>
               )}
             </View>
@@ -106,10 +106,11 @@ export default function FileItem({ file, onPress, onLongPress, isGridView = fals
           {file.name}
         </Text>
         <View style={styles.listDetails}>
-          {!file.isDirectory && file.size && (
-            <Text style={styles.listFileSize}>
-              {formatFileSize(file.size)}
+          {!file.isDirectory && (
+           <Text style={styles.listFileSize}>
+                {formatFileSize(file.size)}
             </Text>
+
           )}
           {file.modificationTime && (
             <Text style={styles.listFileDate}>
